@@ -123,7 +123,8 @@ ngx_http_push_stream_delete_channels_data(ngx_http_push_stream_shm_data_t *data)
                             ngx_http_push_stream_send_response_content_header(subscriber->request, ngx_http_get_module_loc_conf(subscriber->request, ngx_http_push_stream_module));
                         }
 
-                        ngx_http_push_stream_send_response_message(subscriber->request, channel, channel->channel_deleted_message, 1, 0);
+                        // hotfix deleted msg is not allocated, so wont bother to send
+                        // ngx_http_push_stream_send_response_message(subscriber->request, channel, channel->channel_deleted_message, 1, 0);
 
 
                         // subscriber does not have any other subscription, the connection may be closed
@@ -952,12 +953,14 @@ ngx_http_push_stream_delete_channel(ngx_http_push_stream_main_conf_t *mcf, ngx_h
         ngx_queue_insert_tail(&data->channels_to_delete, &channel->queue);
         ngx_shmtx_unlock(&data->channels_to_delete_mutex);
 
-        // apply channel deleted message text to message template
+
+        // hotfix part 1, do not allocate delete msg due wont be read anyway
+        /*// apply channel deleted message text to message template
         if ((channel->channel_deleted_message = ngx_http_push_stream_convert_char_to_msg_on_shared(mcf, text, len, channel, NGX_HTTP_PUSH_STREAM_CHANNEL_DELETED_MESSAGE_ID, NULL, NULL, temp_pool)) == NULL) {
             ngx_shmtx_unlock(&data->channels_queue_mutex);
             ngx_log_error(NGX_LOG_ERR, temp_pool->log, 0, "push stream module: unable to allocate memory to channel deleted message");
             return 0;
-        }
+        }*/
 
         // send signal to each worker with subscriber to this channel
         if (ngx_queue_empty(&channel->workers_with_subscribers)) {
